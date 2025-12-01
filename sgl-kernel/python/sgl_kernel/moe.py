@@ -80,6 +80,40 @@ def topk_sigmoid(
     )
 
 
+def topk_sigmoid_opt(
+    topk_weights: torch.Tensor,
+    topk_ids: torch.Tensor,
+    gating_output: torch.Tensor,
+    renormalize: bool = False,
+    correction_bias: Optional[torch.Tensor] = None,
+) -> None:
+    """
+    OPTIMIZED top-k sigmoid for MoE routing.
+
+    Key optimization: Exploits sigmoid's monotonicity and element-wise independence.
+    - Performs TopK selection on raw logits (no sigmoid computation needed for comparison)
+    - Only computes sigmoid for the selected TopK elements
+    - Reduces exp() operations from num_experts to topk
+
+    Note: When correction_bias is provided, falls back to computing sigmoid first
+    because sigmoid(x) + bias breaks the monotonicity of raw logits.
+
+    Args:
+        topk_weights: Output tensor for top-k weights [num_tokens, topk]
+        topk_ids: Output tensor for top-k expert indices [num_tokens, topk]
+        gating_output: Gating logits [num_tokens, num_experts]
+        renormalize: Whether to renormalize the top-k weights
+        correction_bias: Per-expert bias correction [num_experts], must be float32 if provided
+    """
+    torch.ops.sgl_kernel.topk_sigmoid_opt.default(
+        topk_weights,
+        topk_ids,
+        gating_output,
+        renormalize,
+        correction_bias,
+    )
+
+
 def moe_sum_reduce(
     input_tensor,
     output_tensor,

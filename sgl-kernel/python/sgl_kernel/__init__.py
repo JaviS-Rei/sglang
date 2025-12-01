@@ -92,6 +92,7 @@ from sgl_kernel.moe import (
     moe_sum_reduce,
     prepare_moe_input,
     topk_sigmoid,
+    topk_sigmoid_opt,
     topk_softmax,
 )
 from sgl_kernel.quantization import (
